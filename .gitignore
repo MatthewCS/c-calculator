@@ -64,3 +64,6 @@ calc
 *.tab.c
 *.tab.h
 *.yy.c
+
+# Test outputs
+tests/out/*

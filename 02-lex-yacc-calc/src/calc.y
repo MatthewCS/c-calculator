@@ -1,10 +1,14 @@
 %{
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
+#include <string.h>
 #include <unistd.h>
 #include "./src/lib/hashset.h"
 #include "./src/lib/hashtable.h"
+
+extern FILE* yyin;
+FILE* ptrout;
 
 const int CLIMODE = 1;  // use CLI version of calculator
 const int ASMMODE = 2;  // compile to assembly
@@ -108,8 +112,8 @@ int opval;          // operator value
 %%
 input: line input | line;
 
-line: declare NEWLINE { fprintf(stderr, "  = %Lf\n\n", $1); cliprompt(); }
-    | expr NEWLINE    { fprintf(stderr, "  = %Lf\n\n", $1); cliprompt(); }
+line: declare NEWLINE { if(mode == CLIMODE) fprintf(stderr, "  = %Lf\n\n", $1); cliprompt(); }
+    | expr NEWLINE    { if(mode == CLIMODE) fprintf(stderr, "  = %Lf\n\n", $1); cliprompt(); }
     | HELP NEWLINE    { clihelp(); cliprompt(); }
     | EXIT NEWLINE    { cliexit(); }
     ;
@@ -249,6 +253,7 @@ int main(int argc, char** argv)
   }
 
   // check to see if we got both an input path and an output path
+  // also check to ensure that the two paths are not identical
   if(!ifpath || !ofpath)
   {
     fprintf(
@@ -257,10 +262,17 @@ int main(int argc, char** argv)
     );
     exit(1);
   }
+  if(strcmp(ifpath, ofpath) == 0)
+  {
+    fprintf(
+      stderr,
+      "ERROR: input path and output path must not be the same.\n"
+    );
+    exit(1);
+  }
 
   // everything is good to go, let's compile
   //   ... later.
-  /*
   fprintf(
     stderr,
     "\
@@ -270,7 +282,56 @@ MODE:               %d\n\
 MODEKNOWN:          %d\n",
     ifpath, ofpath, mode, modeknown
   );
-  */
+
+  if(mode == ASMMODE)
+  {
+    fprintf(stderr, "ERROR: ASMMODE not yet supported!\n");
+    return 0;
+  }
+  else if(mode == TXTMODE)
+  {
+    yyin = fopen(ifpath, "r");
+    // if we failed to open yyin, return an error
+    if(errno != 0)
+    {
+      fprintf(
+        stderr,
+        "ERROR OPENING INPUT FILE \"%s\": %s\n",
+        ifpath, strerror(errno)
+      );
+      exit(1);
+    }
+
+    // pointer to output file
+    ptrout = fopen(ofpath, "w");
+    // if we failed to open ptrout, return an error
+    if(errno != 0)
+    {
+      fprintf(
+        stderr,
+        "ERROR OPENING OUTPUT FILE \"%s\": %s\n",
+        ofpath, strerror(errno)
+      );
+      exit(1);
+    }
+
+    yyparse();
+
+    // iterate over variable table and dump the contents
+    // into the output file
+    for(int i = 0; i < variable_table->capacity; ++i)
+    {
+      HTbucket* bucket = variable_table->items[i];
+
+      while(bucket != NULL)
+      {
+        fprintf(ptrout, "%s=%Lf\n", bucket->node->key, bucket->node->value);
+        bucket = bucket->next;
+      }
+    }
+
+    return 0;
+  }
   return 0;
 }
 
