@@ -13,6 +13,7 @@ FILE* ptrout;
 const int CLIMODE = 1;  // use CLI version of calculator
 const int ASMMODE = 2;  // compile to assembly
 const int TXTMODE = 3;  // compile to plaintext file
+const int CLITXTMODE = 4;   // dump plaintext output to terminal
 const char* HELPMSG =
 "Simple calculator made using Lex & Yacc\n\
 \n\
@@ -26,11 +27,15 @@ Flags for compiler mode:\n\
   -i  specify an input file.                    REQUIRED\n\
   -o  specify an output file.                   REQUIRED\n\
   -h  display this help message, then exit.     OPTIONAL\n\
-  -a  output to assembly (default, NOT          OPTIONAL\n\
-        COMPATIBLE WITH -t FLAG)\n\
+  -a  output to assembly. (default, NOT        OPTIONAL\n\
+        COMPATIBLE WITH -t FLAG or -c FLAG)\n\
   -t  output to a plaintext file, instead       OPTIONAL\n\
-        of assembly (NOT COMPATIBLE WITH \n\
-        -a FLAG)\n\
+        of assembly. (NOT COMPATIBLE WITH \n\
+        -a FLAG or -c FLAG)\n\
+  -c  output to the terminal, showing only      OPTIONAL\n\
+        the output normally given from the\n\
+        -t flag. (NOT COMPATIBLWE WITH -a\n\
+        FLAG or -t FLAG\n\
 \n\
 SUPPORTED COMMANDS:\n\
   - exit, Exit, EXIT                            CLI MODE ONLY\n\
@@ -204,7 +209,7 @@ int main(int argc, char** argv)
 
   mode = ASMMODE;         // assume we want ASM mode
 
-  while((c = getopt(argc, argv, "i:o:hat")) != -1)
+  while((c = getopt(argc, argv, "i:o:hatc")) != -1)
   {
     switch(c)
     {
@@ -231,6 +236,16 @@ int main(int argc, char** argv)
         modeknown = 1;
         mode = TXTMODE;
         break;
+      case 'c':     // TXT mode
+        if(modeknown == 1)
+        {
+          fprintf(stderr, "ERROR: Cannot specify a compile mode multiple times.\n");
+          exit(1);
+        }
+
+        modeknown = 1;
+        mode = CLITXTMODE;
+        break;
       case 'i':     // input file
         ifpath = optarg;
         break;
@@ -253,21 +268,30 @@ int main(int argc, char** argv)
     }
   }
 
-  // check to see if we got both an input path and an output path
-  // also check to ensure that the two paths are not identical
-  if(!ifpath || !ofpath)
+  // check to ensure that, if we are in CLITXTMODE, we have no output path
+  if(mode == CLITXTMODE && ofpath)
   {
     fprintf(
       stderr,
-      "ERROR: input path and output path must be specified with -i and -o flags.\n"
+      "ERROR: Output path must not be given with the -c flag.\n"
     );
     exit(1);
   }
-  if(strcmp(ifpath, ofpath) == 0)
+  // check to see if we got both an input path and an output path
+  if(!ifpath || (mode != CLITXTMODE && !ofpath))
   {
     fprintf(
       stderr,
-      "ERROR: input path and output path must not be the same.\n"
+      "ERROR: Input path and output path must be specified with -i and -o flags.\n"
+    );
+    exit(1);
+  }
+  // check to ensure that the two paths are not identical
+  if(mode != CLITXTMODE && strcmp(ifpath, ofpath) == 0)
+  {
+    fprintf(
+      stderr,
+      "ERROR: Input path and output path must not be the same.\n"
     );
     exit(1);
   }
@@ -283,7 +307,6 @@ int main(int argc, char** argv)
   else if(mode == TXTMODE)
   {
     openio(ifpath, ofpath);
-
     yyparse();
 
     // iterate over variable table and dump the contents
@@ -295,6 +318,36 @@ int main(int argc, char** argv)
       while(bucket != NULL)
       {
         fprintf(ptrout, "%s=%Lf\n", bucket->node->key, bucket->node->value);
+        bucket = bucket->next;
+      }
+    }
+
+    return 0;
+  }
+  else if(mode == CLITXTMODE)
+  {
+    yyin = fopen(ifpath, "r");
+    // if we failed to open yyin, return an error
+    if(errno != 0)
+    {
+      fprintf(
+        stderr,
+        "ERROR OPENING INPUT FILE \"%s\": %s\n",
+        ifpath, strerror(errno)
+      );
+      exit(1);
+    }
+    yyparse();
+
+    // iterate over variable table and dump the contents
+    // into the output file
+    for(int i = 0; i < variable_table->capacity; ++i)
+    {
+      HTbucket* bucket = variable_table->items[i];
+
+      while(bucket != NULL)
+      {
+        fprintf(stderr, "%s=%Lf\n", bucket->node->key, bucket->node->value);
         bucket = bucket->next;
       }
     }
@@ -316,7 +369,7 @@ void clihelp()
     fprintf(stderr, "%s\n", HELPMSG);
   else
   {
-    fprintf(stderr, "ERROR: Help command only allowed in CLI mode.");
+    fprintf(stderr, "ERROR: Help command only allowed in CLI mode.\n");
     exit(1);
   }
 }
