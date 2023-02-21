@@ -66,4 +66,4 @@ calc
 *.yy.c
 
 # Test outputs
-tests/out/*
+tests/output_files/*
