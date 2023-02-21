@@ -85,6 +85,7 @@ HT* variable_table;
 void cliprompt();
 void clihelp();
 void cliexit();
+void openio(char* ifpath, char* ofpath);
 int yyparse();
 int yylex();
 int yyerror(char* message);
@@ -273,15 +274,6 @@ int main(int argc, char** argv)
 
   // everything is good to go, let's compile
   //   ... later.
-  fprintf(
-    stderr,
-    "\
-INPUT FILE PATH:    %s\n\
-OUTPUT FILE PATH:   %s\n\
-MODE:               %d\n\
-MODEKNOWN:          %d\n",
-    ifpath, ofpath, mode, modeknown
-  );
 
   if(mode == ASMMODE)
   {
@@ -290,30 +282,7 @@ MODEKNOWN:          %d\n",
   }
   else if(mode == TXTMODE)
   {
-    yyin = fopen(ifpath, "r");
-    // if we failed to open yyin, return an error
-    if(errno != 0)
-    {
-      fprintf(
-        stderr,
-        "ERROR OPENING INPUT FILE \"%s\": %s\n",
-        ifpath, strerror(errno)
-      );
-      exit(1);
-    }
-
-    // pointer to output file
-    ptrout = fopen(ofpath, "w");
-    // if we failed to open ptrout, return an error
-    if(errno != 0)
-    {
-      fprintf(
-        stderr,
-        "ERROR OPENING OUTPUT FILE \"%s\": %s\n",
-        ofpath, strerror(errno)
-      );
-      exit(1);
-    }
+    openio(ifpath, ofpath);
 
     yyparse();
 
@@ -351,6 +320,7 @@ void clihelp()
     exit(1);
   }
 }
+
 void cliexit()
 {
   if(mode == CLIMODE)
@@ -361,6 +331,34 @@ void cliexit()
   else
   {
     fprintf(stderr, "ERROR: Exit command only allowed in CLI mode.\n");
+    exit(1);
+  }
+}
+
+void openio(char* ifpath, char* ofpath)
+{
+  yyin = fopen(ifpath, "r");
+  // if we failed to open yyin, return an error
+  if(errno != 0)
+  {
+    fprintf(
+      stderr,
+      "ERROR OPENING INPUT FILE \"%s\": %s\n",
+      ifpath, strerror(errno)
+    );
+    exit(1);
+  }
+
+  // pointer to output file
+  ptrout = fopen(ofpath, "w");
+  // if we failed to open ptrout, return an error
+  if(errno != 0)
+  {
+    fprintf(
+      stderr,
+      "ERROR OPENING OUTPUT FILE \"%s\": %s\n",
+      ofpath, strerror(errno)
+    );
     exit(1);
   }
 }
