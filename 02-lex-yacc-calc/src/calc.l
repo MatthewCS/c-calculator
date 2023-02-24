@@ -11,6 +11,8 @@ static int input(void);
 %}
 
 number ([0-9]*\.[0-9]+|[0-9]+\.?)
+infinity (inf)
+nan (nan|NaN)
 whitespace [ \t]
 help (help|Help|HELP)
 exit (exit|Exit|EXIT)
@@ -24,6 +26,14 @@ variable ([a-zA-Z_][a-zA-Z0-9_]*)
 "("             { return yytext[0]; }
 ")"             { return yytext[0]; }
 {number}        {
+                  yylval.ldval = strtold(yytext, NULL);
+                  return NUM;
+                }
+{infinity}      {
+                  yylval.ldval = strtold(yytext, NULL);
+                  return NUM;
+                }
+{nan}           {
                   yylval.ldval = strtold(yytext, NULL);
                   return NUM;
                 }

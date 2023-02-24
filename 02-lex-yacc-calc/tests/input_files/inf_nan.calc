@@ -1,0 +1,4 @@
+w = 1 / 0
+x = -inf
+y = nan + 5
+z = x + inf

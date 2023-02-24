@@ -80,9 +80,11 @@ The calculator supports variables.\n\
 char* RESERVED_WORDS[] =  {   // keywords that cannot be used as variables
   "help", "Help", "HELP",
   "exit", "Exit", "EXIT",
-  "reserved", "Reserved", "RESERVED"
+  "reserved", "Reserved", "RESERVED",
+  "inf",
+  "nan", "NaN"
 };
-const int RESERVED_WORD_COUNT = 9;
+const int RESERVED_WORD_COUNT = 12;
 int mode = 0;
 HS* reserved_words;
 HT* variable_table;
