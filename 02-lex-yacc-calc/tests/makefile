@@ -9,7 +9,7 @@ GENHTMLFLAGS = --output-directory ../coverage/
 
 all: $(EXECUTABLE) coverage_report run
 
-$(EXECUTABLE): out/lib/ out/lib/check_libs.o ../out/lib/hashtable.o ../out/lib/hashset.o
+$(EXECUTABLE): out/lib/ out/lib/check_libs.o ../out/lib/hashtable.o ../out/lib/hashset.o ../out/lib/tree.o
 	$(CC) $(CFLAGS) $(CHECKFLAGS) -o $(EXECUTABLE) out/**/*.o  ../out/**/*.o $(CHECKLIBS)
 
 out/lib/check_libs.o: out/lib/ src/lib/check_libs.c
@@ -20,6 +20,9 @@ out/lib/check_libs.o: out/lib/ src/lib/check_libs.c
 
 ../out/lib/hashtable.o: ../out/lib/ ../src/lib/hashtable.c
 	$(CC) $(CFLAGS) -c ../src/lib/hashtable.c -o ../out/lib/hashtable.o
+
+../out/lib/tree.o: ../out/lib/ ../src/lib/tree.c
+	$(CC) $(CFLAGS) -c ../src/lib/tree.c -o ../out/lib/tree.o
 
 out/lib/: out/
 	$(MKDIR) out/lib/
@@ -38,7 +41,7 @@ out/:
 
 .PHONY : clean
 clean:
-	rm -rf ./out/* ../out/* ./test ../**/*.gcov ../**/*.gcda ./**/*.gcno ./coverage.info
+	rm -rf ./out/* ../out/* ./test ../**/*.gcov ../**/*.gcda ./**/*.gcno ./coverage.info ../coverage/
 
 .PHONY : run
 run: $(EXECUTABLE)

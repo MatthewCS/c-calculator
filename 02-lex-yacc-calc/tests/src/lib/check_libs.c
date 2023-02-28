@@ -1,7 +1,10 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <check.h>
+#include "../../../src/lib/const.h"
 #include "../../../src/lib/hashset.h"
 #include "../../../src/lib/hashtable.h"
+#include "../../../src/lib/tree.h"
 
 START_TEST(test_hashstr)
 {
@@ -40,13 +43,61 @@ START_TEST(test_hashset)
   ck_assert_int_eq(hashset_find(hashset, "bw"), 0);
 
   free_hashset(hashset);
+  
+  // now do the same but with reserved words
+  HS* hashset_const_items = new_hashset_const_items(RESERVED_WORDS, RESERVED_WORD_COUNT);
+
+  // check that "reserved" is in the set
+  ck_assert_int_eq(hashset_find(hashset_const_items, "reserved"), 1);
+  // check that "not reserved" is not in the set
+  ck_assert_int_eq(hashset_find(hashset_const_items, "not reserved"), 0);
+
+  free_hashset(hashset_const_items);
 }
 END_TEST
 
 START_TEST(test_exit_hashset_failed_init)
 {
+  fprintf(stderr, "[THIS TEST SHOULD FAIL] ");
   char* set_items[] = {"x", "x"};
   new_hashset(set_items, 2);
+}
+
+START_TEST(test_tree)
+{
+  /*
+   test tree:
+   1 |     +
+     |    / \
+   2 |  x    /
+     |      / \
+   3 |    3.14  *
+     |         / \
+   4 |      -1   y
+     |          /
+   5 |        ???
+  */
+
+  TreeNode* root    = build_tree(T_ADDOP,     0,    "",     '+',  NULL, NULL);
+  TreeNode* left_2  = build_tree(T_VARIABLE,  0,    "x",    '\0', NULL, NULL);
+  TreeNode* right_2 = build_tree(T_MULOP,     0,    "",     '/',  NULL, NULL);
+  TreeNode* left_3  = build_tree(T_NUM,       3.14, "",     '\0', NULL, NULL);
+  TreeNode* right_3 = build_tree(T_MULOP,     0,    "",     '*',  NULL, NULL);
+  TreeNode* left_4  = build_tree(T_NUM,       -1,   "",     '\0', NULL, NULL);
+  TreeNode* right_4 = build_tree(T_VARIABLE,  0,    "y",    '\0', NULL, NULL);
+  TreeNode* left_5  = build_tree(1,           2,    "???",  '4',  NULL, NULL);
+
+  root->left_child = left_2;
+  root->right_child = right_2;
+  right_2->left_child = left_3;
+  right_2->right_child = right_3;
+  right_3->left_child = left_4;
+  right_3->right_child = right_4;
+  right_4->left_child = left_5;
+
+  print_tree(root);
+
+  free_tree(root);
 }
 
 START_TEST(test_hashtable)
@@ -98,6 +149,7 @@ Suite * lib_suite(void)
   tcase_add_test(tc_core, test_hashset);
   tcase_add_exit_test(tc_core, test_exit_hashset_failed_init, 1);
   tcase_add_test(tc_core, test_hashtable);
+  tcase_add_test(tc_core, test_tree);
 
   suite_add_tcase(s, tc_core);
 
