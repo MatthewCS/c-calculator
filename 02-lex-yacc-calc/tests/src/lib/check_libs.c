@@ -69,13 +69,13 @@ START_TEST(test_tree)
    test tree:
    1 |     +
      |    / \
-   2 |  x    /
+   2 |   x   /
      |      / \
    3 |    3.14  *
      |         / \
-   4 |      -1   y
-     |          /
-   5 |        ???
+   4 |       -1   y
+     |           /
+   5 |         ???
   */
 
   TreeNode* root    = build_tree(T_ADDOP,     0,    "",     '+',  NULL, NULL);
