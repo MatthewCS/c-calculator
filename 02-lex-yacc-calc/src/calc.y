@@ -4,87 +4,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "./src/lib/const.h"
 #include "./src/lib/hashset.h"
 #include "./src/lib/hashtable.h"
 
 extern FILE* yyin;
 FILE* ptrout;
 
-const int CLIMODE = 1;  // use CLI version of calculator
-const int ASMMODE = 2;  // compile to assembly
-const int TXTMODE = 3;  // compile to plaintext file
-const int CLITXTMODE = 4;   // dump plaintext output to terminal
-const char* HELPMSG =
-"Simple calculator made using Lex & Yacc\n\
-\n\
-This calculator can be run in one of two modes: CLI mode and compiler mode.\n\
- - CLI mode is accessed by running the program with no arguments.\n\
-    ex: ./calc\n\
- - Compiler mode is accessed by running the program with the -i and -o flags.\n\
-    ex: ./calc -i input.calc -o output\n\
-\n\
-Flags for compiler mode:\n\
-  -i  specify an input file.                    REQUIRED\n\
-  -o  specify an output file.                   REQUIRED\n\
-  -h  display this help message, then exit.     OPTIONAL\n\
-  -a  output to assembly. (default, NOT        OPTIONAL\n\
-        COMPATIBLE WITH -t FLAG or -c FLAG)\n\
-  -t  output to a plaintext file, instead       OPTIONAL\n\
-        of assembly. (NOT COMPATIBLE WITH \n\
-        -a FLAG or -c FLAG)\n\
-  -c  output to the terminal, showing only      OPTIONAL\n\
-        the output normally given from the\n\
-        -t flag. (NOT COMPATIBLWE WITH -a\n\
-        FLAG or -t FLAG\n\
-\n\
-SUPPORTED COMMANDS:\n\
-  - exit, Exit, EXIT                            CLI MODE ONLY\n\
-      Exit from CLI mode.\n\
-  - help, Help, HELP                            CLI MODE ONLY\n\
-      Display this help message.\n\
-\n\
-SUPPORTED OPERATIONS:\n\
-  <num> + <num>         ADDITION\n\
-  <num> - <num>         SUBTRACTION\n\
-  <num> * <num>         MULTIPLICATION\n\
-  <num> / <num>         DIVISION\n\
-  (<operation[s]>)      PARENTHESIS\n\
-\n\
-The calculator supports whole numbers, as well as decimal values.\n\
-  Numbers must match the following regex:\n\
-    \\([0-9]*\\.[0-9]+|[0-9]+\\.?)\n\
-  Numbers can also be lead with a + or - sign.\n\
-  The following examples are valid numbers:\n\
-  -  123\n\
-  -  1.23\n\
-  -  .123\n\
-  -  +123\n\
-  -  -123\n\
-  -  01.230\n\
-\n\
-The calculator supports variables.\n\
-  A variable name must not be a reserved word, such as:\n\
-    \"help\", \"Exit\", \"RESERVED\"\n\
-  A variable must start with a letter or an underscore.\n\
-  Variable names may contain numbers after the first character.\n\
-  To declare a variable, use:\n\
-    <varname> = <expression>\n\
-  ex:\n\
-  - x = 5\n\
-  - new_value = x / 0.5\n\
-  - new_value = new_value * 2\n\
-  If you attempt to access an undeclared variable in the\n\
-  expression section, then the calculator throws an error and\n\
-  then exits immediately.\n\
-";
-char* RESERVED_WORDS[] =  {   // keywords that cannot be used as variables
-  "help", "Help", "HELP",
-  "exit", "Exit", "EXIT",
-  "reserved", "Reserved", "RESERVED",
-  "inf",
-  "nan", "NaN"
-};
-const int RESERVED_WORD_COUNT = 12;
 int mode = 0;
 HS* reserved_words;
 HT* variable_table;
@@ -188,7 +114,7 @@ varval: VARIABLE
 int main(int argc, char** argv)
 {
   // initialize hashset of reserved words
-  reserved_words = new_hashset(RESERVED_WORDS, RESERVED_WORD_COUNT);
+  reserved_words = new_hashset_const_items(RESERVED_WORDS, RESERVED_WORD_COUNT);
   // initialize hashtable of variables
   variable_table = new_hashtable();
   // assume CLI mode until told otherwise
@@ -303,6 +229,8 @@ int main(int argc, char** argv)
 
   if(mode == ASMMODE)
   {
+    openio(ifpath, ofpath);
+    yyparse();
     fprintf(stderr, "ERROR: ASMMODE not yet supported!\n");
     return 0;
   }

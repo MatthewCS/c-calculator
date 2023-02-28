@@ -19,6 +19,7 @@ typedef struct Hashset
 
 int hashset_hash(const HS* hashset, const char* str);
 HS* new_hashset(char* items[], const unsigned int count);
+HS* new_hashset_const_items(const char* items[], const unsigned int count);
 void free_hashset(HS* hashset);
 int hashset_find(HS* hashset, const char* str);
 

@@ -40,7 +40,7 @@ HS* new_hashset(char* items[], const unsigned int count)
         // scenario 2.1: item already found, abort
         if(strcmp(bucket->val, items[i]) == 0)
         {
-          fprintf(stderr, "ERROR: item \"%s\" inserted into set twice. Aborting. . .", items[i]);
+          fprintf(stderr, "ERROR: item \"%s\" inserted into set twice. Aborting. . .\n", items[i]);
           exit(1);
         }
 
@@ -55,6 +55,16 @@ HS* new_hashset(char* items[], const unsigned int count)
   }
 
   return set;
+}
+
+HS* new_hashset_const_items(const char* items[], const unsigned int count)
+{
+  char** nonconst_items = (char**)calloc(count, sizeof(char*));
+
+  for(int i = 0; i < count; ++i)
+    nonconst_items[i] = (char*)items[i];
+
+  return new_hashset(nonconst_items, count);
 }
 
 void free_hashset(HS* hashset)
