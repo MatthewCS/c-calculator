@@ -57,6 +57,9 @@ dkms.conf
 # Compiled calculator
 calc
 
+# Compiled test file
+test
+
 # Code coverage
 *.output
 
@@ -67,3 +70,9 @@ calc
 
 # Test outputs
 tests/output_files/*
+
+# Test coverage
+coverage
+*.gcda
+*.gcno
+*.info
